@@ -1,17 +1,17 @@
-# SPoTLIghT: Integrating Histology and Spatial Transcriptomics
+# Integrating Histology and Spatial Transcriptomics
 
-Group 6 | BS Bioinformatics
+Group 6 | BS Bioinformatics Batch 2023 
 Syeda Lajeen | Maheen Ali | Hafsa Asghar
 
-Paper: Lapuente-Santana, O., Kant, J. and Eduati, F. Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study. npj Precision Oncology 8, 254 (2024). https://doi.org/10.1038/s41698-024-00749-w
+Paper: https://doi.org/10.1038/s41698-024-00749-w
 
 ---
 
 ## What this paper is about
 
-So basically the whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time, RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but no location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
+The whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is that these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but not the location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
 
-This paper builds a computational tool called SPoTLIghT that bridges this gap. It trains a machine learning model using both H&E imaging features and RNA-seq derived cell type scores, and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a spatial map of the tumor microenvironment that you can generate from just a standard H&E slide, with no additional sequencing required.
+This paper builds a computational tool called SPoTLIghT that bridges this gap. It trains a ML model using both H&E imaging features and RNA-seq derived cell type scores and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a location map of the tumor microenvironment that you can generate from just a standard H&E slide with no additional sequencing required.
 
 The reason this matters clinically is that where immune cells are located in a tumor turns out to predict patient survival better than just knowing how many immune cells are present. Two patients with identical T cell counts can have completely different outcomes depending on whether those T cells are actually inside the tumor or stuck at the edges.
 
