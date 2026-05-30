@@ -1,17 +1,17 @@
-# Integrating Histology and Spatial Transcriptomics
+# SPoTLIghT: Integrating Histology and Spatial Transcriptomics
 
-Group 6 | BS Bioinformatics Batch 2023 
+Group 6 | BS Bioinformatics
 Syeda Lajeen | Maheen Ali | Hafsa Asghar
 
-Paper: https://doi.org/10.1038/s41698-024-00749-w
+Paper: Lapuente-Santana, O., Kant, J. and Eduati, F. Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study. npj Precision Oncology 8, 254 (2024). https://doi.org/10.1038/s41698-024-00749-w
 
 ---
 
 ## What this paper is about
 
-The whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is that these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but not the location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
+So basically the whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time, RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but no location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
 
-This paper builds a computational tool called SPoTLIghT that bridges this gap. It trains a ML model using both H&E imaging features and RNA-seq derived cell type scores and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a location map of the tumor microenvironment that you can generate from just a standard H&E slide with no additional sequencing required.
+This paper builds a computational tool called SPoTLIghT that bridges this gap. It trains a machine learning model using both H&E imaging features and RNA-seq derived cell type scores, and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a spatial map of the tumor microenvironment that you can generate from just a standard H&E slide, with no additional sequencing required.
 
 The reason this matters clinically is that where immune cells are located in a tumor turns out to predict patient survival better than just knowing how many immune cells are present. Two patients with identical T cell counts can have completely different outcomes depending on whether those T cells are actually inside the tumor or stuck at the edges.
 
@@ -98,7 +98,13 @@ The IE subtype has the highest T cell abundance and connectivity. IE/F has high 
 
 ![Feature Distributions](colab/outputs/feature_distributions.png)
 
+Before doing any analysis we just looked at how the 96 features are distributed across patients. The point is that if all patients had the same value for a feature it would be useless for prediction. The six plots above show T cell and CAF related features. T cell connectivity (LCC) ranges from near 0 to near 1 which is good, it means there is real variation to work with. Average T cell abundance has a median of 0.500 which seems balanced across patients.
+
 T cell co-localization with tumor cells has a median of only 0.104 across 350 patients. We did not expect it to be that low. It means in most melanoma patients barely 10 percent of image tiles contain both T cells and tumor cells together, which suggests immune exclusion is more the norm than the exception in this cancer type.
+
+### Survival prediction methodology
+
+For survival prediction the authors trained an elastic net logistic regression model on TCGA patients using the 96 spatial features to predict 1-year survival status (alive or deceased within 1 year). They only used stage I to III patients for training since the CPTAC validation cohort only has early stage patients. Class weights were applied because the dataset is imbalanced (far more alive patients than deceased). The model was retrained 100 times on bootstrapped data and predictions were averaged. Features with non-zero coefficients in more than 50% of runs were considered robust predictors.
 
 ### Survival analysis
 
@@ -183,6 +189,16 @@ The spatial feature CSVs download automatically from the authors GitHub. All six
 No local installation needed. Just a Google account.
 
 ---
+
+## Limitations
+
+The paper itself mentions a few things worth noting. The CPTAC validation cohort only has 4 deceased patients out of 36, which is a very small positive class for evaluating survival prediction. The sensitivity of 75% and specificity of 72% should be interpreted carefully given this. Larger validation cohorts would strengthen the conclusion.
+
+The spatial maps are at tile level resolution which is roughly 25 microns per tile, not single cell resolution. Some fine-grained spatial patterns may be missed at this scale.
+
+The model was trained on fresh frozen tissue slides from TCGA. Clinical practice mostly uses formalin fixed paraffin embedded (FFPE) tissue. The paper does show the method works on FFPE too but a systematic comparison between the two tissue types has not been done.
+
+Only four cell types were studied. The tumor microenvironment has many more cell types like macrophages, dendritic cells and NK cells that could be informative if molecular signatures for them were included.
 
 ## Citation
 
