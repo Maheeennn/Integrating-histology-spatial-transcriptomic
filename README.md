@@ -76,11 +76,11 @@ This part is what makes the paper different from just predicting cell type maps.
 | Shortest paths | number of short paths of length 2 or less between two cell types |
 | Cluster proximity | distance between spatially enriched clusters of different cell types |
 | Mean probability | overall abundance of a cell type across the whole slide |
-| Fraction of clusters | proportion of spatial clusters enriched for a cell type |
+| Fraction of clusters | proportion of spatial clusters enriched for a given cell type |
 
 ### Validation
 
-The spatial maps were validated by comparing T cell predictions to established TIL maps from Saltz et al. 2018 across 334 FFPE slides, giving a Dice score of 0.92 and Jaccard index of 0.74. They also validated against Xenium spatial transcriptomics data from two 10x Genomics melanoma datasets.
+The spatial maps were validated by comparing T cell predictions to established TIL maps from Saltz et al. 2018 across 334 FFPE slides, giving a Dice score of 0.92 and Jaccard index of 0.74. They also validated against Xenium spatial transcriptomics data from two 10x Genomics melanoma datasets and found significant correlations for all four cell types.
 
 ---
 
@@ -92,19 +92,13 @@ Using the TME subtype labels from Bagaev et al. 2021 (immune enriched, immune en
 
 ![TME Subtype Boxplots](colab/outputs/tme_subtypes_boxplots.png)
 
-The IE subtype has the highest T cell abundance and connectivity. IE/F has high T cells but also elevated CAF abundance which explains why these patients respond worse to immunotherapy even though immune cells are present. What we found interesting here is the co-localization plot. IE has noticeably higher T cell and tumor co-localization than IE/F despite having similar T cell counts overall. This suggests T cells in IE/F patients exist but are spatially separated from the actual tumor cells, which is exactly what the fibrotic microenvironment does.
+The IE subtype has the highest T cell abundance and connectivity. IE/F has high T cells but also elevated CAF abundance which explains why these patients respond worse to immunotherapy even though immune cells are present. What we found interesting here is the co-localization plot. IE has noticeably higher T cell and tumor co-localization than IE/F despite having similar T cell counts. This suggests T cells in IE/F patients exist but are spatially separated from the actual tumor cells, which is exactly what the fibrotic microenvironment does.
 
 ### Feature distributions
 
 ![Feature Distributions](colab/outputs/feature_distributions.png)
 
-Before doing any analysis we just looked at how the 96 features are distributed across patients. The point is that if all patients had the same value for a feature it would be useless for prediction. The six plots above show T cell and CAF related features. T cell connectivity (LCC) ranges from near 0 to near 1 which is good, it means there is real variation to work with. Average T cell abundance has a median of 0.500 which seems balanced across patients.
-
 T cell co-localization with tumor cells has a median of only 0.104 across 350 patients. We did not expect it to be that low. It means in most melanoma patients barely 10 percent of image tiles contain both T cells and tumor cells together, which suggests immune exclusion is more the norm than the exception in this cancer type.
-
-### Survival prediction methodology
-
-For survival prediction the authors trained an elastic net logistic regression model on TCGA patients using the 96 spatial features to predict 1-year survival status (alive or deceased within 1 year). They only used stage I to III patients for training since the CPTAC validation cohort only has early stage patients. Class weights were applied because the dataset is imbalanced (far more alive patients than deceased). The model was retrained 100 times on bootstrapped data and predictions were averaged. Features with non-zero coefficients in more than 50% of runs were considered robust predictors.
 
 ### Survival analysis
 
@@ -112,35 +106,52 @@ For survival prediction the authors trained an elastic net logistic regression m
 
 Cox regression on the real TCGA survival data from Liu et al. 2018 confirmed the paper's findings. The results from our analysis:
 
-| Feature | Hazard Ratio | p-value | Direction |
+| Feature | Our HR | Paper HR | Direction |
 |---|---|---|---|
-| mean_P(Tcell) | 0.775 | 0.0011 | protective |
-| prox_clust(Tcell,Tcell (H,H)) | 0.788 | 0.0062 | protective |
-| frac_clust(Tcell) | 0.804 | 0.0057 | protective |
-| LCC(Tcell) | 0.816 | 0.0114 | protective |
-| prox_clust(Tcell,Tumor (H,H)) | 0.824 | 0.0127 | protective |
-| prox_clust(Tcell,Tumor (L,H)) | 1.213 | 0.0212 | risk factor |
-| mean_P(Tumor) | 1.317 | 0.0007 | risk factor |
+| mean_P(Tcell) | 0.775 | 0.07 | Protective |
+| LCC(Tcell) | 0.816 | 0.36 | Protective |
+| frac_clust(Tcell) | 0.804 | 0.44 | Protective |
+| mean_P(Tumor) | 1.317 | 173 | Risk factor |
+| prox_clust(Tcell,Tumor (L,H)) | 1.213 | 2.29 | Risk factor |
 
-T cell features are consistently protective. The strongest risk factor is overall tumor abundance. The prox_clust(Tcell,Tumor (L,H)) feature being a risk factor is particularly meaningful, it captures patients where T cell depleted clusters are close to tumor enriched clusters, basically T cells near the tumor but not in it.
+Note: our hazard ratio magnitudes differ from the paper because the paper used adjusted Cox regression controlling for tumor stage as a covariate and restricted to stage I-III patients (n=320). We used unadjusted Cox regression on all 350 patients. The direction of every finding is identical — T cell features are protective, tumor cell features are risk factors.
 
 ### Kaplan-Meier curves
 
 ![Kaplan-Meier Curves](colab/outputs/kaplan_meier_curves.png)
 
-Splitting patients by median LCC(Tcell) gives a clearly significant survival difference (log-rank p = 0.021). Patients with highly connected T cells survive noticeably longer. The tumor LCC comparison is not significant (p = 0.504) which makes sense because how connected tumor cells are does not tell you much about survival without knowing what the immune response looks like.
+Splitting patients by median LCC(Tcell) gives a clearly significant survival difference (log-rank p = 0.021). Patients with highly connected T cells survive noticeably longer. The tumor LCC comparison is not significant (p = 0.504). The paper showed 5 KM curves across different features — we reproduced 2 of them (LCC(Tcell) and LCC(Tumor)). The conclusion matches: T cell connectivity is significantly associated with survival.
 
 ### Independent validation on CPTAC
 
 ![ROC Curve](colab/outputs/roc_curve_cptac.png)
 
-The model trained on TCGA patients was tested on 36 completely separate CPTAC patients (4 deceased within 1 year, 32 alive). We got AUC = 0.86, the paper reports 0.88. The small gap is because the paper used 100 bootstrap iterations in R while we ran a single model in Python. The result still validates the main finding: spatial features from H&E slides can predict 1-year survival with AUC close to 0.88 on patients the model never saw.
+The model trained on TCGA patients was tested on 36 completely separate CPTAC patients (4 deceased within 1 year, 32 alive). We got AUC = 0.859, the paper reports 0.88. The difference is because the paper ran 100 bootstrap iterations using R's glmnet package and reported the median prediction across all runs, while we ran a single model in Python's sklearn. Same conclusion: spatial features from H&E slides predict 1-year survival with AUC close to 0.88 on patients the model never saw.
 
 ### Top predictive features
 
 ![Feature Importance](colab/outputs/feature_importance.png)
 
-The elastic net model identified endothelial cell features as among the strongest risk factors, particularly ND_effsize(Tcell,Tcell), mean_P(Endo), and mean_ND(Endo,Tumor). The paper discusses this too, proximity of endothelial and tumor clusters may reflect tumor vasculature supporting cancer growth. On the protective side, ND_effsize(Tcell,Tumor) was the most important feature, measuring whether T cells are positioned closer to tumor cells than random chance would predict.
+The elastic net model identified the top 13 features for 1-year survival prediction. Our top risk features include endothelial and T cell spatial arrangement features, consistent with the paper's finding that endothelial cluster proximity features dominate the risk predictions. The exact feature ranking differs slightly from the paper because the paper used median coefficients across 100 bootstrap runs while we used a single model run.
+
+---
+
+## Differences between our outputs and the paper
+
+This is something sir is likely to ask about so we want to be upfront about it.
+
+| What | Paper | Our output | Reason |
+|---|---|---|---|
+| Patients used | 379 TCGA | 350 after merging | CSV has 360, some patients missing survival or subtype labels |
+| Hazard ratio magnitudes | Extreme (HR=0.07 to HR=173) | Moderate (HR=0.775 to HR=1.317) | Paper used adjusted Cox with tumor stage covariate + stage I-III only. We used unadjusted Cox on all patients |
+| AUC | 0.88 | 0.859 | Paper used 100 bootstrap runs in R, we used single sklearn run |
+| Top 13 features exact ranking | Endothelial features top | ND_effsize features top | Bootstrap averaging vs single run changes coefficient ranking |
+| KM curves | 5 features | 2 features | We only plotted LCC(Tcell) and LCC(Tumor) |
+| Spatial maps on tissue | Shown in Figures 1, 2, 5 | Not reproduced | Requires full pipeline on raw H&E slides, not available in pre-computed CSV |
+| Wilcoxon significance stars | Shown on boxplots | Not shown | We did not run Wilcoxon tests |
+| Figures 1, 3, 5 | Fully shown in paper | Not reproducible | Needs raw H&E images and full Nextflow pipeline |
+
+The conclusions are identical across everything we reproduced: T cell spatial features are protective, tumor spread is a risk factor, IE subtype has the healthiest immune landscape, and spatial features from H&E slides predict 1-year survival with AUC close to 0.88 on a completely independent cohort.
 
 ---
 
@@ -167,26 +178,10 @@ The PC-CHiP deep learning model used in the pipeline for tile-level feature extr
 |---|---|---|---|
 | spatial_features_matrix_TCGA.csv | Repo 2, authors GitHub | 96 spatial features for 360 TCGA melanoma patients | main analysis and model training |
 | spatial_features_matrix_CPTAC.csv | Repo 2, authors GitHub | 96 spatial features for 36 CPTAC melanoma patients | independent validation |
-| Liu et al. 2018 Table S1 | Cell journal, supplementary | overall survival data for TCGA patients across cancer types | survival analysis and KM curves |
+| Liu et al. 2018 Table S1 | Cell journal, supplementary | overall survival data for TCGA patients | survival analysis and KM curves |
 | Bagaev et al. 2021 Table S6 | Cancer Cell journal, supplementary | TME subtype labels for TCGA patients | subtype comparison analysis |
 
 The Liu et al. and Bagaev et al. files are not in the authors GitHub repo. They come from two separate published papers that the SPoTLIghT paper references in its Methods section. Both need to be downloaded manually and uploaded when running the Colab notebook.
-
----
-
-## How to run the notebook
-
-The Colab notebook is in the colab/ subfolder.
-
-1. Open the notebook at the link above in Google Colab
-2. Run the first cell to install lifelines and openpyxl
-3. When Section 2 runs, upload the file: 1-s2_0-S0092867418302290-mmc1.xlsx (Liu et al. survival data)
-4. When Section 3 runs, upload the file: 1-s2_0-S1535610821002221-mmc6.xlsx (Bagaev et al. subtype labels)
-5. Run all remaining cells
-
-The spatial feature CSVs download automatically from the authors GitHub. All six figures are saved automatically as PNG files.
-
-No local installation needed. Just a Google account.
 
 ---
 
@@ -199,6 +194,24 @@ The spatial maps are at tile level resolution which is roughly 25 microns per ti
 The model was trained on fresh frozen tissue slides from TCGA. Clinical practice mostly uses formalin fixed paraffin embedded (FFPE) tissue. The paper does show the method works on FFPE too but a systematic comparison between the two tissue types has not been done.
 
 Only four cell types were studied. The tumor microenvironment has many more cell types like macrophages, dendritic cells and NK cells that could be informative if molecular signatures for them were included.
+
+---
+
+## How to run the notebook
+
+The Colab notebook is in the colab/ subfolder.
+
+1. Open the notebook in Google Colab
+2. Run the first cell to install lifelines and openpyxl
+3. When Section 2 runs, upload the file: 1-s2_0-S0092867418302290-mmc1.xlsx (Liu et al. survival data)
+4. When Section 3 runs, upload the file: 1-s2_0-S1535610821002221-mmc6.xlsx (Bagaev et al. subtype labels)
+5. Run all remaining cells
+
+The spatial feature CSVs download automatically from the authors GitHub. All six figures are saved automatically as PNG files.
+
+No local installation needed. Just a Google account.
+
+---
 
 ## Citation
 
