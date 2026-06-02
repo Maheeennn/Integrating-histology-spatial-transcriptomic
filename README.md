@@ -2,8 +2,6 @@
 
 Paper: Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study https://doi.org/10.1038/s41698-024-00749-w
 
----
-
 ## What this paper is about
 
 The whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time, RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but no location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
@@ -11,8 +9,6 @@ The whole point of this paper is that doctors already collect H&E stained tissue
 This paper builds a tool called SPoTLIghT that bridges this gap. It trains a machine learning model using both H&E imaging features and RNA-seq derived cell type scores and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a spatial map of the tumor microenvironment that you can generate from just a standard H&E slide with no additional sequencing required.
 
 The reason this matters clinically is that where immune cells are located in a tumor turns out to predict patient survival better than just knowing how many immune cells are present. Two patients with identical T cell counts can have completely different outcomes depending on whether those T cells are actually inside the tumor or stuck at the edges.
-
----
 
 ## Methodology
 
@@ -29,7 +25,7 @@ They used 379 melanoma patients from TCGA. Every patient had both an H&E slide f
 
 ### Feature extraction from H&E slides
 
-Each H&E slide is cut into tiles of 512 by 512 pixels at 20x magnification. A pretrained convolutional neural network called PC-CHiP (Fu et al. 2020) processes each tile and produces 1536 imaging features from its last hidden layer. These features capture the visual appearance of the tissue at that location without being explicitly told what to look for.
+Each H&E slide is cut into tiles of 512 by 512 pixels at 20x magnification. A pre trained CNN called PC-CHiP processes each tile and produces 1536 imaging features from its last hidden layer. These features capture the visual appearance of the tissue at that location without being explicitly told what to look for.
 
 ### Cell type quantification from RNA-seq
 
@@ -37,9 +33,7 @@ For each patient they used multiple published tools to quantify each cell type f
 
 ### Transfer learning model (RMTLR)
 
-This is the core of the method. RMTLR stands for Regularized Multi-Task Linear Regression. It takes the 1536 tile-level imaging features as input and learns to predict the RNA-seq based cell type scores as output. Multi-task means it predicts all quantification methods for a cell type simultaneously rather than training separate models. A group sparsity regularization term forces the model to select only the imaging features that are genuinely informative, which prevents overfitting.
-
-Four separate RMTLR models are trained, one per cell type, using 5-fold nested cross-validation.
+This is the core of the method. RMTLR stands for Regularized Multi-Task Linear Regression. It takes the 1536 tile-level imaging features as input and learns to predict the RNA-seq based cell type scores as output. Multi-task means it predicts all quantification methods for a cell type simultaneously rather than training separate models. The model selects only the imaging features that are genuinely informative which prevents overfitting.
 
 ### Spatial probability maps
 
@@ -47,7 +41,7 @@ Once trained the models are applied tile by tile to every slide. Each tile gets 
 
 ### Graph based spatial features
 
-This part is what makes the paper different from just predicting cell type maps. They convert the tile grid into a graph where tiles are nodes connected to their spatial neighbors (up to 8 per node). From this graph they extract 96 features across several groups:
+This part is what makes the paper different from just predicting cell type maps. They convert the tile grid into a graph where tiles are nodes connected to their spatial neighbors. From this graph they extract 96 features across several groups:
 
 | Feature group | What it measures |
 |---|---|
@@ -69,11 +63,11 @@ The spatial maps were validated by comparing T cell predictions to established T
 
 ### TME subtype analysis
 
-Using the TME subtype labels from Bagaev et al. 2021 (immune enriched, immune enriched fibrotic, fibrotic, immune depleted), we tested whether the spatial features differ across these groups. The boxplots below show they clearly do.
+Using the TME subtype labels we tested whether the spatial features differ across these groups. The boxplots below show they clearly do.
 
 ![TME Subtype Boxplots](colab/outputs/tme_subtypes_boxplots.png)
 
-The IE subtype has the highest T cell abundance and connectivity. IE/F has high T cells but also elevated CAF abundance which explains why these patients respond worse to immunotherapy even though immune cells are present. What we found interesting here is the co-localization plot. IE has noticeably higher T cell and tumor co-localization than IE/F despite having similar T cell counts. This suggests T cells in IE/F patients exist but are spatially separated from the actual tumor cells, which is exactly what the fibrotic microenvironment does.
+The IE subtype has the highest T cell abundance and connectivity. IE/F has high T cells but also elevated CAF abundance which explains why these patients respond worse to immunotherapy even though immune cells are present. What we found interesting here is the co-localization plot. IE has noticeably higher T cell and tumor co-localization than IE/F despite having similar T cell counts. This suggests T cells in IE/F patients exist but are spatially separated from the actual tumor cells which is exactly what the fibrotic microenvironment does.
 
 ### Feature distributions
 
@@ -95,7 +89,7 @@ Cox regression on the real TCGA survival data from Liu et al. 2018 confirmed the
 | mean_P(Tumor) | 1.317 | 173 | Risk factor |
 | prox_clust(Tcell,Tumor (L,H)) | 1.213 | 2.29 | Risk factor |
 
-Note: our hazard ratio magnitudes differ from the paper because the paper used adjusted Cox regression controlling for tumor stage as a covariate and restricted to stage I-III patients (n=320). We used unadjusted Cox regression on all 350 patients. The direction of every finding is identical — T cell features are protective, tumor cell features are risk factors.
+Note: our hazard ratio magnitudes differ from the paper because the paper used adjusted Cox regression controlling for tumor stage  and restricted stage I-III patients. We used unadjusted Cox regression on all 350 patients though the direction of every finding is identical i.e T cell features are protective, tumor cell features are risk factors.
 
 ### Kaplan-Meier curves
 
