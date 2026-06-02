@@ -9,27 +9,11 @@ Paper: Lapuente-Santana, O., Kant, J. and Eduati, F. Integrating histopathology 
 
 ## What this paper is about
 
-So basically the whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time, RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but no location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
+The whole point of this paper is that doctors already collect H&E stained tissue slides from basically every cancer patient as a routine part of diagnosis. At the same time, RNA sequencing data from these same patients tells you which cell types are present in the tumor. The problem is these two data sources are never really used together in a spatial way. RNA-seq gives you cell type quantities but no location information. H&E images give you spatial structure but you cannot identify specific cell types just by looking at the staining pattern.
 
-This paper builds a computational tool called SPoTLIghT that bridges this gap. It trains a machine learning model using both H&E imaging features and RNA-seq derived cell type scores, and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a spatial map of the tumor microenvironment that you can generate from just a standard H&E slide, with no additional sequencing required.
+This paper builds a tool called SPoTLIghT that bridges this gap. It trains a machine learning model using both H&E imaging features and RNA-seq derived cell type scores and then uses that model to predict where each cell type is located across the entire tissue slide. The output is essentially a spatial map of the tumor microenvironment that you can generate from just a standard H&E slide with no additional sequencing required.
 
 The reason this matters clinically is that where immune cells are located in a tumor turns out to predict patient survival better than just knowing how many immune cells are present. Two patients with identical T cell counts can have completely different outcomes depending on whether those T cells are actually inside the tumor or stuck at the edges.
-
----
-
-## Background and existing work
-
-Before this paper there were already methods trying to connect histology with molecular data but each had limitations.
-
-Computational staining methods like Saltz et al. 2018 could map tumor infiltrating lymphocytes on H&E slides but they needed manual annotations to train and could only work for cell types with a visually distinct appearance, mainly lymphocytes. They could not generalize to other cell types like fibroblasts or endothelial cells which do not have an obvious visual signature.
-
-Bulk RNA-seq deconvolution tools like EPIC, quanTIseq and MCP-counter estimate cell type fractions from gene expression but produce a single number per patient with no spatial information at all.
-
-Spatial transcriptomics platforms like Visium and Xenium can measure gene expression at spatial resolution but they are expensive, not collected routinely in clinics and were not available for historical patient cohorts like TCGA.
-
-The approach this paper builds on most directly is Fu et al. 2020 (Nature Cancer) which showed that a deep learning model called PC-CHiP could extract histopathological features from H&E tiles that correlate with molecular phenotypes. SPoTLIghT takes those extracted features and adds a transfer learning layer on top to predict specific cell type abundances at the tile level.
-
-Honestly the part that took us a while to understand was why you even need the RNA-seq data if the end goal is just to analyze H&E images. The answer is that RNA-seq is only used during training to teach the model what the imaging features of each cell type look like. Once the model is trained you never need RNA-seq again, you can apply it to any H&E slide. That is the whole point of the transfer learning approach.
 
 ---
 
