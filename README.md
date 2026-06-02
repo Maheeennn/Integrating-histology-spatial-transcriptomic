@@ -1,9 +1,6 @@
 # SPoTLIghT: Integrating Histology and Spatial Transcriptomics
 
-Group 6 | BS Bioinformatics
-Syeda Lajeen | Maheen Ali | Hafsa Asghar
-
-Paper: Lapuente-Santana, O., Kant, J. and Eduati, F. Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study. npj Precision Oncology 8, 254 (2024). https://doi.org/10.1038/s41698-024-00749-w
+Paper: Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study https://doi.org/10.1038/s41698-024-00749-w
 
 ---
 
@@ -21,7 +18,7 @@ The reason this matters clinically is that where immune cells are located in a t
 
 ### Data
 
-They used 379 melanoma patients from TCGA (The Cancer Genome Atlas), specifically the SKCM cancer type. Every patient had both an H&E slide from fresh frozen tissue and matching bulk RNA-seq data. They focused on four cell types that are most relevant in the tumor microenvironment:
+They used 379 melanoma patients from TCGA. Every patient had both an H&E slide from fresh frozen tissue and matching bulk RNA-seq data. They focused on four cell types that are most relevant in the tumor microenvironment:
 
 | Cell type | Role in tumor |
 |---|---|
