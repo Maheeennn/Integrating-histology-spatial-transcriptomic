@@ -1,5 +1,7 @@
 # SPoTLIghT: Integrating Histology and Spatial Transcriptomics
 
+Maheen | Lajeen | Hafsa Asghar
+
 Paper: Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study https://doi.org/10.1038/s41698-024-00749-w
 
 ## What this paper is about
@@ -154,3 +156,11 @@ No local installation needed. Just a Google account.
 ## Citation
 
 Lapuente-Santana, O., Kant, J. and Eduati, F. Integrating histopathology and transcriptomics for spatial tumor microenvironment profiling in a melanoma case study. npj Precision Oncology 8, 254 (2024). https://doi.org/10.1038/s41698-024-00749-w
+
+## Authors Github Repos Link 
+1. SPoTLIghT pipeline (main tool)
+https://github.com/SysBioOncology/SPoTLIghT
+2. Manuscript analysis repo (what we used)
+https://github.com/SysBioOncology/spatial_features_manuscript
+3. PC-CHiP deep learning model
+https://github.com/yufu2015/PC-CHiP
