@@ -95,13 +95,13 @@ Note: our hazard ratio magnitudes differ from the paper because the paper used a
 
 ![Kaplan-Meier Curves](colab/outputs/kaplan_meier_curves.png)
 
-Splitting patients by median LCC(Tcell) gives a clearly significant survival difference (log-rank p = 0.021). Patients with highly connected T cells survive noticeably longer. The tumor LCC comparison is not significant (p = 0.504). The paper showed 5 KM curves across different features — we reproduced 2 of them (LCC(Tcell) and LCC(Tumor)). The conclusion matches: T cell connectivity is significantly associated with survival.
+Splitting patients by median LCC(Tcell) gives a clearly significant survival difference. Patients with highly connected T cells survive noticeably longer. The tumor LCC comparison is not significant. The paper showed 5 KM curves across different features but we reproduced 2 of them (LCC(Tcell) and LCC(Tumor)). The conclusion matches that T cell connectivity is significantly associated with survival.
 
 ### Independent validation on CPTAC
 
 ![ROC Curve](colab/outputs/roc_curve_cptac.png)
 
-The model trained on TCGA patients was tested on 36 completely separate CPTAC patients (4 deceased within 1 year, 32 alive). We got AUC = 0.859, the paper reports 0.88. The difference is because the paper ran 100 bootstrap iterations using R's glmnet package and reported the median prediction across all runs, while we ran a single model in Python's sklearn. Same conclusion: spatial features from H&E slides predict 1-year survival with AUC close to 0.88 on patients the model never saw.
+The model trained on TCGA patients was tested on 36 completely separate cancer patients (4 deceased within 1 year, 32 alive). We got AUC = 0.859, the paper reports 0.88. The difference is because the paper ran 100 bootstrap iterations using R's glmnet package and reported the median prediction across all runs while we ran a single model in Python's sklearn. However we got the dsmr conclusion that spatial features from H&E slides predict 1-year survival with AUC close to 0.88 on patients the model never saw.
 
 ### Top predictive features
 
@@ -109,33 +109,13 @@ The model trained on TCGA patients was tested on 36 completely separate CPTAC pa
 
 The elastic net model identified the top 13 features for 1-year survival prediction. Our top risk features include endothelial and T cell spatial arrangement features, consistent with the paper's finding that endothelial cluster proximity features dominate the risk predictions. The exact feature ranking differs slightly from the paper because the paper used median coefficients across 100 bootstrap runs while we used a single model run.
 
----
-
-## Differences between our outputs and the paper
-
-This is something sir is likely to ask about so we want to be upfront about it.
-
-| What | Paper | Our output | Reason |
-|---|---|---|---|
-| Patients used | 379 TCGA | 350 after merging | CSV has 360, some patients missing survival or subtype labels |
-| Hazard ratio magnitudes | Extreme (HR=0.07 to HR=173) | Moderate (HR=0.775 to HR=1.317) | Paper used adjusted Cox with tumor stage covariate + stage I-III only. We used unadjusted Cox on all patients |
-| AUC | 0.88 | 0.859 | Paper used 100 bootstrap runs in R, we used single sklearn run |
-| Top 13 features exact ranking | Endothelial features top | ND_effsize features top | Bootstrap averaging vs single run changes coefficient ranking |
-| KM curves | 5 features | 2 features | We only plotted LCC(Tcell) and LCC(Tumor) |
-| Spatial maps on tissue | Shown in Figures 1, 2, 5 | Not reproduced | Requires full pipeline on raw H&E slides, not available in pre-computed CSV |
-| Wilcoxon significance stars | Shown on boxplots | Not shown | We did not run Wilcoxon tests |
-| Figures 1, 3, 5 | Fully shown in paper | Not reproducible | Needs raw H&E images and full Nextflow pipeline |
-
-The conclusions are identical across everything we reproduced: T cell spatial features are protective, tumor spread is a risk factor, IE subtype has the healthiest immune landscape, and spatial features from H&E slides predict 1-year survival with AUC close to 0.88 on a completely independent cohort.
-
----
 
 ## Which GitHub repos exist and which did we use
 
 There are three repositories associated with this paper.
 
 **Repo 1: https://github.com/SysBioOncology/SPoTLIghT**
-The full SPoTLIghT pipeline built with Nextflow and Docker. It needs Docker, Apptainer or Singularity, and an HPC cluster to run. The input data alone (raw TCGA whole slide images) is hundreds of gigabytes. We did not use this because it cannot run on Google Colab and the setup requirements are beyond what is feasible for reproduction in a notebook environment.
+The full SPoTLIghT pipeline built with Nextflow and Docker. It needs Docker, Apptainer or Singularity and an HPC cluster to run. The input data alone (raw TCGA whole slide images) is hundreds of gigabytes. We did not use this because it cannot run on Google Colab and the setup requirements are beyond what is feasible for reproduction in a notebook environment.
 
 **Repo 2: https://github.com/SysBioOncology/spatial_features_manuscript**
 This is the repository the authors made specifically for reproducing the manuscript figures. It contains the final computed spatial features for all patients as CSV files and R notebooks for figure reproduction. We used this repository. The two files we loaded are:
@@ -145,7 +125,6 @@ This is the repository the authors made specifically for reproducing the manuscr
 **Repo 3: https://github.com/yufu2015/PC-CHiP**
 The PC-CHiP deep learning model used in the pipeline for tile-level feature extraction. The authors used this as a pretrained feature extractor inside the SPoTLIghT pipeline. We did not use it directly because the feature extraction step was already completed by the authors and the outputs are embedded in the CSV files from Repo 2.
 
----
 
 ## Datasets used
 
@@ -157,20 +136,6 @@ The PC-CHiP deep learning model used in the pipeline for tile-level feature extr
 | Bagaev et al. 2021 Table S6 | Cancer Cell journal, supplementary | TME subtype labels for TCGA patients | subtype comparison analysis |
 
 The Liu et al. and Bagaev et al. files are not in the authors GitHub repo. They come from two separate published papers that the SPoTLIghT paper references in its Methods section. Both need to be downloaded manually and uploaded when running the Colab notebook.
-
----
-
-## Limitations
-
-The paper itself mentions a few things worth noting. The CPTAC validation cohort only has 4 deceased patients out of 36, which is a very small positive class for evaluating survival prediction. The sensitivity of 75% and specificity of 72% should be interpreted carefully given this. Larger validation cohorts would strengthen the conclusion.
-
-The spatial maps are at tile level resolution which is roughly 25 microns per tile, not single cell resolution. Some fine-grained spatial patterns may be missed at this scale.
-
-The model was trained on fresh frozen tissue slides from TCGA. Clinical practice mostly uses formalin fixed paraffin embedded (FFPE) tissue. The paper does show the method works on FFPE too but a systematic comparison between the two tissue types has not been done.
-
-Only four cell types were studied. The tumor microenvironment has many more cell types like macrophages, dendritic cells and NK cells that could be informative if molecular signatures for them were included.
-
----
 
 ## How to run the notebook
 
@@ -185,8 +150,6 @@ The Colab notebook is in the colab/ subfolder.
 The spatial feature CSVs download automatically from the authors GitHub. All six figures are saved automatically as PNG files.
 
 No local installation needed. Just a Google account.
-
----
 
 ## Citation
 
